@@ -1,0 +1,39 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "deploy-plugin-to-vps",
+      "type": "shell",
+      "command": "powershell.exe",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/../jellyfin-source/scripts/deploy-plugin.ps1",
+        "-PluginProjectPath",
+        "${workspaceFolder}/MyJellyfinPlugin.csproj"
+      ],
+      "group": {
+        "kind": "build",
+        "isDefault": true
+      },
+      "problemMatcher": [
+        "$msCompile"
+      ]
+    },
+    {
+      "label": "deploy-jellyfin-image-and-plugin",
+      "type": "shell",
+      "command": "powershell.exe",
+      "args": [
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "${workspaceFolder}/../jellyfin-source/scripts/deploy-jellyfin.ps1"
+      ],
+      "problemMatcher": [
+        "$msCompile"
+      ]
+    }
+  ]
+}

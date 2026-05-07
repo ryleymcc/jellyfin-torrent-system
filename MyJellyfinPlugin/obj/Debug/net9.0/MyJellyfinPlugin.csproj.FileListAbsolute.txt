@@ -1,0 +1,12 @@
+c:\Users\faste\projects\vps\jellyfin\MyJellyfinPlugin\bin\Debug\net9.0\MyJellyfinPlugin.deps.json
+c:\Users\faste\projects\vps\jellyfin\MyJellyfinPlugin\bin\Debug\net9.0\MyJellyfinPlugin.dll
+c:\Users\faste\projects\vps\jellyfin\MyJellyfinPlugin\bin\Debug\net9.0\MyJellyfinPlugin.pdb
+c:\Users\faste\projects\vps\jellyfin\MyJellyfinPlugin\obj\Debug\net9.0\MyJellyfinPlugin.csproj.AssemblyReference.cache
+c:\Users\faste\projects\vps\jellyfin\MyJellyfinPlugin\obj\Debug\net9.0\MyJellyfinPlugin.GeneratedMSBuildEditorConfig.editorconfig
+c:\Users\faste\projects\vps\jellyfin\MyJellyfinPlugin\obj\Debug\net9.0\MyJellyfinPlugin.AssemblyInfoInputs.cache
+c:\Users\faste\projects\vps\jellyfin\MyJellyfinPlugin\obj\Debug\net9.0\MyJellyfinPlugin.AssemblyInfo.cs
+c:\Users\faste\projects\vps\jellyfin\MyJellyfinPlugin\obj\Debug\net9.0\MyJellyfinPlugin.csproj.CoreCompileInputs.cache
+c:\Users\faste\projects\vps\jellyfin\MyJellyfinPlugin\obj\Debug\net9.0\MyJellyfinPlugin.dll
+c:\Users\faste\projects\vps\jellyfin\MyJellyfinPlugin\obj\Debug\net9.0\refint\MyJellyfinPlugin.dll
+c:\Users\faste\projects\vps\jellyfin\MyJellyfinPlugin\obj\Debug\net9.0\MyJellyfinPlugin.pdb
+c:\Users\faste\projects\vps\jellyfin\MyJellyfinPlugin\obj\Debug\net9.0\ref\MyJellyfinPlugin.dll

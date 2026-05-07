@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Download Content</title>
+    <style>
+        .pluginTabBar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5em;
+            margin-bottom: 1em;
+        }
+
+        .pluginTabButton {
+            min-width: 9em;
+        }
+
+        .pluginView {
+            margin-top: 0.5em;
+        }
+
+        .sourceBadge {
+            font-weight: 600;
+            margin-top: 0.35em;
+        }
+
+        .paginationRow {
+            display: flex;
+            align-items: center;
+            gap: 0.75em;
+            margin-top: 0.75em;
+            margin-bottom: 1em;
+        }
+
+        .inlineInputRow {
+            display: flex;
+            gap: 1em;
+            align-items: flex-end;
+            flex-wrap: wrap;
+        }
+
+        .inlineInputRow .inputContainer {
+            flex: 1 1 20em;
+            min-width: 16em;
+        }
+    </style>
+</head>
+<body>
+<div id="MyJellyfinPluginConfigPage"
+     data-role="page"
+     class="page type-interior pluginConfigurationPage"
+     data-require="emby-input,emby-button,emby-select,emby-checkbox">
+    <div data-role="content">
+        <div class="content-primary">
+            <h1>Download Content</h1>
+
+            <div class="pluginTabBar" role="tablist" aria-label="Download Content Views">
+                <button type="button" is="emby-button" class="raised emby-button pluginTabButton" data-view="search" aria-selected="true">Search</button>
+                <button type="button" is="emby-button" class="raised emby-button pluginTabButton" data-view="torrents" aria-selected="false">Current Downloads</button>
+                <button type="button" is="emby-button" class="raised emby-button pluginTabButton" data-view="files" aria-selected="false">Download Files</button>
+                <button type="button" is="emby-button" class="raised emby-button pluginTabButton" data-view="addmagnet" aria-selected="false">Add Magnet</button>
+                <button type="button" is="emby-button" class="raised emby-button pluginTabButton" data-view="settings" aria-selected="false">Settings</button>
+            </div>
+
+            <div id="ViewSearch" class="pluginView" data-view="search">
+                <div class="sectionTitleContainer">
+                    <h2 class="sectionTitle">Find New Content</h2>
+                    <div class="fieldDescription sourceBadge">Source: piratebay</div>
+                </div>
+
+                <form id="SearchForm">
+                    <div class="inlineInputRow">
+                        <div class="inputContainer">
+                            <label class="inputLabel inputLabelUnfocused" for="SearchQuery">Search Query</label>
+                            <input id="SearchQuery" type="text" is="emby-input" placeholder="movie, show, linux iso" />
+                        </div>
+
+                        <div>
+                            <button is="emby-button" type="submit" class="raised button-submit emby-button">
+                                <span>Search</span>
+                            </button>
+                        </div>
+                    </div>
+                </form>
+
+                <div class="paginationRow">
+                    <button id="SearchPrevButton" type="button" is="emby-button" class="raised emby-button" disabled>Previous</button>
+                    <span id="SearchPageIndicator" class="fieldDescription">Page 1</span>
+                    <button id="SearchNextButton" type="button" is="emby-button" class="raised emby-button" disabled>Next</button>
+                </div>
+
+                <div class="paperList">
+                    <table class="tblInfo">
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Source</th>
+                            <th>Size</th>
+                            <th>Seed / Leech</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody id="SearchResultsBody">
+                        <tr><td colspan="5">Search to see results.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="ViewTorrents" class="pluginView" data-view="torrents" style="display: none;">
+                <div class="sectionTitleContainer">
+                    <h2 class="sectionTitle">Current Downloads</h2>
+                    <button id="RefreshNowButton" type="button" is="emby-button" class="raised emby-button">Refresh Now</button>
+                </div>
+
+                <div class="paperList">
+                    <table class="tblInfo">
+                        <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>State</th>
+                            <th>Progress</th>
+                            <th>Down / Up</th>
+                            <th>Size</th>
+                            <th>ETA</th>
+                            <th>Ratio</th>
+                            <th>Actions</th>
+                        </tr>
+                        </thead>
+                        <tbody id="TorrentTableBody">
+                        <tr><td colspan="8">Loading downloads...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="ViewFiles" class="pluginView" data-view="files" style="display: none;">
+                <div class="sectionTitleContainer">
+                    <h2 id="TorrentFilesTitle" class="sectionTitle">Download Files</h2>
+                    <div id="TorrentFilesHint" class="fieldDescription">Select a download from Current Downloads to manage file priorities.</div>
+                </div>
+
+                <div class="paperList">
+                    <table class="tblInfo">
+                        <thead>
+                        <tr>
+                            <th>File</th>
+                            <th>Size</th>
+                            <th>Progress</th>
+                            <th>Priority</th>
+                            <th>Action</th>
+                        </tr>
+                        </thead>
+                        <tbody id="TorrentFilesBody">
+                        <tr><td colspan="5">No download selected.</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="ViewAddMagnet" class="pluginView" data-view="addmagnet" style="display: none;">
+                <h2>Add Magnet</h2>
+                <form id="AddMagnetForm">
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="MagnetLink">Magnet Link</label>
+                        <input id="MagnetLink" type="text" is="emby-input" placeholder="magnet:?xt=urn:btih:..." />
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="OverrideSavePath">Save Path Override (optional)</label>
+                        <input id="OverrideSavePath" type="text" is="emby-input" />
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="OverrideCategory">Category Override (optional)</label>
+                        <input id="OverrideCategory" type="text" is="emby-input" />
+                    </div>
+
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+                            <input id="AddPaused" type="checkbox" is="emby-checkbox" />
+                            <span>Add as paused</span>
+                        </label>
+                    </div>
+
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                            <span>Add to Downloads</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="ViewSettings" class="pluginView" data-view="settings" style="display: none;">
+                <h2>Settings</h2>
+                <form id="MyJellyfinPluginSettingsForm">
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="QbittorrentBaseUrl">qBittorrent URL</label>
+                        <input id="QbittorrentBaseUrl" type="text" is="emby-input" placeholder="http://qbittorrent:8080/" />
+                        <div class="fieldDescription">Use the qBittorrent container URL reachable from Jellyfin.</div>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="QbittorrentUsername">qBittorrent Username</label>
+                        <input id="QbittorrentUsername" type="text" is="emby-input" />
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="QbittorrentPassword">qBittorrent Password</label>
+                        <input id="QbittorrentPassword" type="password" is="emby-input" />
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="DefaultSavePath">Default Save Path</label>
+                        <input id="DefaultSavePath" type="text" is="emby-input" placeholder="/downloads" />
+                        <div class="fieldDescription">Must be a path mounted in both qBittorrent and Jellyfin containers.</div>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="DefaultCategory">Default Category</label>
+                        <input id="DefaultCategory" type="text" is="emby-input" placeholder="jellyfin" />
+                    </div>
+
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+                            <input id="AddMagnetPausedByDefault" type="checkbox" is="emby-checkbox" />
+                            <span>Add magnets in paused state by default</span>
+                        </label>
+                    </div>
+
+                    <div class="checkboxContainer checkboxContainer-withDescription">
+                        <label class="emby-checkbox-label">
+                            <input id="StopSeedingOnCompletion" type="checkbox" is="emby-checkbox" />
+                            <span>Automatically stop seeding when a download completes</span>
+                        </label>
+                        <div class="fieldDescription">Applies to downloads added from Search and Add Magnet. Existing torrents are not changed.</div>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="AutoRefreshSeconds">Auto Refresh Seconds</label>
+                        <input id="AutoRefreshSeconds" type="number" is="emby-input" min="2" max="60" />
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="SearchApiBaseUrl">Search API URL</label>
+                        <input id="SearchApiBaseUrl" type="text" is="emby-input" placeholder="http://torrent-search:3001/" />
+                        <div class="fieldDescription">Container URL reachable from Jellyfin for torrent search.</div>
+                    </div>
+
+                    <div class="inputContainer">
+                        <label class="inputLabel inputLabelUnfocused" for="TmdbApiKey">TMDB API Key</label>
+                        <input id="TmdbApiKey" type="password" is="emby-input" />
+                        <div class="fieldDescription">Optional. Enables TMDB title suggestions and posters in the built-in Jellyfin search page.</div>
+                    </div>
+
+                    <div class="fieldDescription">Search source is locked to piratebay.</div>
+
+                    <div>
+                        <button is="emby-button" type="submit" class="raised button-submit block emby-button">
+                            <span>Save Settings</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="TorrentStatusMessage" class="fieldDescription" style="margin-top: 1em;"></div>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        (function() {
+            var pluginUniqueId = '693d5992-886d-4e21-941d-a7ed51c5fa32';
+            var lockedSearchSource = 'piratebay';
+            var page = document.querySelector('#MyJellyfinPluginConfigPage');
+            var refreshTimer = null;
+            var eventsBound = false;
+            var currentConfig = null;
+            var selectedTorrentHash = null;
+            var selectedTorrentName = null;
+            var isPageVisible = false;
+
+            var uiState = {
+                activeView: 'search',
+                searchQuery: '',
+                searchPage: 1,
+                hasPreviousPage: false,
+                hasNextPage: false
+            };
+
+            var viewElements = {
+                search: document.querySelector('#ViewSearch'),
+                torrents: document.querySelector('#ViewTorrents'),
+                files: document.querySelector('#ViewFiles'),
+                addmagnet: document.querySelector('#ViewAddMagnet'),
+                settings: document.querySelector('#ViewSettings')
+            };
+
+            function escapeHtml(value) {
+                if (!value) {
+                    return '';
+                }
+
+                return value
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;')
+                    .replace(/"/g, '&quot;')
+                    .replace(/'/g, '&#39;');
+            }
+
+            function asNumber(value, fallback) {
+                var parsed = parseInt(value, 10);
+                if (Number.isNaN(parsed)) {
+                    return fallback;
+                }
+
+                return parsed;
+            }
+
+            function asFloat(value, fallback) {
+                var parsed = parseFloat(value);
+                if (Number.isNaN(parsed)) {
+                    return fallback;
+                }
+
+                return parsed;
+            }
+
+            function asBoolean(value, fallback) {
+                if (typeof value === 'boolean') {
+                    return value;
+                }
+
+                if (typeof value === 'number') {
+                    return value !== 0;
+                }
+
+                if (typeof value === 'string') {
+                    var normalized = value.trim().toLowerCase();
+                    if (normalized === 'true') {
+                        return true;
+                    }
+
+                    if (normalized === 'false') {
+                        return false;
+                    }
+                }
+
+                return fallback;
+            }
+
+            function pickField(obj, camelName, pascalName) {
+                if (!obj) {
+                    return undefined;
+                }
+
+                if (obj[camelName] !== undefined && obj[camelName] !== null) {
+                    return obj[camelName];
+                }
+
+                if (obj[pascalName] !== undefined && obj[pascalName] !== null) {
+                    return obj[pascalName];
+                }
+
+                return undefined;
+            }
+
+            function formatBytes(bytes) {
+                if (bytes <= 0) {
+                    return '0 B';
+                }
+
+                var units = ['B', 'KB', 'MB', 'GB', 'TB'];
+                var index = 0;
+                var size = bytes;
+
+                while (size >= 1024 && index < units.length - 1) {
+                    size /= 1024;
+                    index += 1;
+                }
+
+                return size.toFixed(index === 0 ? 0 : 1) + ' ' + units[index];
+            }
+
+            function formatSpeed(bytesPerSecond) {
+                return formatBytes(bytesPerSecond) + '/s';
+            }
+
+            function formatPercent(progress) {
+                var value = (progress || 0) * 100;
+                return value.toFixed(1) + '%';
+            }
+
+            function formatEta(seconds) {
+                if (seconds < 0) {
+                    return 'Unknown';
+                }
+
+                if (seconds === 0) {
+                    return 'Done';
+                }
+
+                var hours = Math.floor(seconds / 3600);
+                var minutes = Math.floor((seconds % 3600) / 60);
+                var remainingSeconds = Math.floor(seconds % 60);
+
+                if (hours > 0) {
+                    return hours + 'h ' + minutes + 'm';
+                }
+
+                if (minutes > 0) {
+                    return minutes + 'm ' + remainingSeconds + 's';
+                }
+
+                return remainingSeconds + 's';
+            }
+
+            function getErrorMessage(error) {
+                if (!error) {
+                    return 'Unknown error';
+                }
+
+                if (typeof error === 'string') {
+                    return error;
+                }
+
+                function readPayload(payload) {
+                    if (!payload || typeof payload !== 'object') {
+                        return null;
+                    }
+
+                    return payload.error || payload.Error || payload.message || payload.Message || null;
+                }
+
+                var payloadError =
+                    readPayload(error.responseJSON) ||
+                    readPayload(error.response) ||
+                    readPayload(error.jqXHR && error.jqXHR.responseJSON) ||
+                    readPayload(error.xhr && error.xhr.responseJSON);
+
+                if (payloadError) {
+                    return payloadError;
+                }
+
+                if (error.responseJSON && error.responseJSON.error) {
+                    return error.responseJSON.error;
+                }
+
+                if (error.error) {
+                    return error.error;
+                }
+
+                var responseText = error.responseText ||
+                    (error.jqXHR && error.jqXHR.responseText) ||
+                    (error.xhr && error.xhr.responseText);
+
+                if (typeof responseText === 'string' && responseText.length > 0) {
+                    try {
+                        var payload = JSON.parse(responseText);
+                        var payloadTextError = readPayload(payload);
+                        if (payloadTextError) {
+                            return payloadTextError;
+                        }
+                    } catch (ignored) {
+                        return responseText;
+                    }
+                }
+
+                if (error.message) {
+                    return error.message;
+                }
+
+                var status = error.status ||
+                    (error.jqXHR && error.jqXHR.status) ||
+                    (error.xhr && error.xhr.status);
+
+                var statusText = error.statusText ||
+                    (error.jqXHR && error.jqXHR.statusText) ||
+                    (error.xhr && error.xhr.statusText);
+
+                if (status || statusText) {
+                    return (status ? status + ' ' : '') + (statusText || 'Request failed');
+                }
+
+                return 'Unknown error';
+            }
+
+            function showStatus(message, isError) {
+                var target = document.querySelector('#TorrentStatusMessage');
+                target.style.color = isError ? '#cc3333' : '';
+                target.textContent = message || '';
+            }
+
+            function apiRequest(method, endpoint, body, expectJson) {
+                var request = {
+                    type: method,
+                    url: ApiClient.getUrl(endpoint)
+                };
+
+                if (body !== undefined) {
+                    request.contentType = 'application/json';
+                    request.data = JSON.stringify(body);
+                }
+
+                if (expectJson) {
+                    request.dataType = 'json';
+                }
+
+                return ApiClient.ajax(request);
+            }
+
+            function setActiveView(viewName) {
+                if (!viewElements[viewName]) {
+                    return;
+                }
+
+                uiState.activeView = viewName;
+
+                Object.keys(viewElements).forEach(function(key) {
+                    viewElements[key].style.display = key === viewName ? '' : 'none';
+                });
+
+                var tabButtons = document.querySelectorAll('.pluginTabButton');
+                tabButtons.forEach(function(button) {
+                    var isActive = button.getAttribute('data-view') === viewName;
+                    button.setAttribute('aria-selected', isActive ? 'true' : 'false');
+                    button.classList.toggle('button-accent', isActive);
+                });
+
+                if (viewName === 'files' && !selectedTorrentHash) {
+                    showStatus('Select a download from Current Downloads to manage files.', false);
+                }
+
+                updateRefreshLoopState();
+            }
+
+            function updateSearchPaginationUi() {
+                var pageIndicator = document.querySelector('#SearchPageIndicator');
+                var prevButton = document.querySelector('#SearchPrevButton');
+                var nextButton = document.querySelector('#SearchNextButton');
+                var hasQuery = !!uiState.searchQuery;
+
+                pageIndicator.textContent = 'Page ' + uiState.searchPage;
+                prevButton.disabled = !hasQuery || !uiState.hasPreviousPage;
+                nextButton.disabled = !hasQuery || !uiState.hasNextPage;
+            }
+
+            function loadConfig() {
+                return ApiClient.getPluginConfiguration(pluginUniqueId).then(function(config) {
+                    currentConfig = config;
+                    document.querySelector('#QbittorrentBaseUrl').value = config.QbittorrentBaseUrl || '';
+                    document.querySelector('#QbittorrentUsername').value = config.QbittorrentUsername || '';
+                    document.querySelector('#QbittorrentPassword').value = config.QbittorrentPassword || '';
+                    document.querySelector('#DefaultSavePath').value = config.DefaultSavePath || '';
+                    document.querySelector('#DefaultCategory').value = config.DefaultCategory || '';
+                    document.querySelector('#AddMagnetPausedByDefault').checked = !!config.AddMagnetPausedByDefault;
+                    document.querySelector('#StopSeedingOnCompletion').checked = asBoolean(config.StopSeedingOnCompletion, true);
+                    document.querySelector('#AutoRefreshSeconds').value = asNumber(config.AutoRefreshSeconds, 5);
+                    document.querySelector('#SearchApiBaseUrl').value = config.SearchApiBaseUrl || '';
+                    document.querySelector('#TmdbApiKey').value = config.TmdbApiKey || '';
+                    document.querySelector('#AddPaused').checked = !!config.AddMagnetPausedByDefault;
+                });
+            }
+
+            function saveConfig(event) {
+                event.preventDefault();
+                Dashboard.showLoadingMsg();
+
+                return ApiClient.getPluginConfiguration(pluginUniqueId)
+                    .then(function(config) {
+                        config.QbittorrentBaseUrl = document.querySelector('#QbittorrentBaseUrl').value.trim();
+                        config.QbittorrentUsername = document.querySelector('#QbittorrentUsername').value.trim();
+                        config.QbittorrentPassword = document.querySelector('#QbittorrentPassword').value;
+                        config.DefaultSavePath = document.querySelector('#DefaultSavePath').value.trim();
+                        config.DefaultCategory = document.querySelector('#DefaultCategory').value.trim();
+                        config.AddMagnetPausedByDefault = document.querySelector('#AddMagnetPausedByDefault').checked;
+                        config.StopSeedingOnCompletion = document.querySelector('#StopSeedingOnCompletion').checked;
+                        config.AutoRefreshSeconds = Math.max(2, Math.min(60, asNumber(document.querySelector('#AutoRefreshSeconds').value, 5)));
+                        config.SearchApiBaseUrl = document.querySelector('#SearchApiBaseUrl').value.trim();
+                        config.SearchApiDefaultSource = lockedSearchSource;
+                        config.TmdbApiKey = document.querySelector('#TmdbApiKey').value.trim();
+                        return ApiClient.updatePluginConfiguration(pluginUniqueId, config);
+                    })
+                    .then(function(result) {
+                        Dashboard.processPluginConfigurationUpdateResult(result);
+                        return loadConfig();
+                    })
+                    .then(function() {
+                        updateRefreshLoopState();
+                        showStatus('Settings saved.', false);
+                    })
+                    .catch(function(error) {
+                        showStatus('Failed to save settings: ' + getErrorMessage(error), true);
+                    })
+                    .finally(function() {
+                        Dashboard.hideLoadingMsg();
+                    });
+            }
+
+            function addMagnet(event) {
+                event.preventDefault();
+
+                var magnetLink = document.querySelector('#MagnetLink').value.trim();
+                if (!magnetLink) {
+                    showStatus('Magnet link is required.', true);
+                    return Promise.resolve();
+                }
+
+                var payload = {
+                    magnetLink: magnetLink,
+                    savePath: document.querySelector('#OverrideSavePath').value.trim() || null,
+                    category: document.querySelector('#OverrideCategory').value.trim() || null,
+                    paused: document.querySelector('#AddPaused').checked
+                };
+
+                Dashboard.showLoadingMsg();
+                return apiRequest('POST', 'MyJellyfinPlugin/Torrents/Add', payload, false)
+                    .then(function() {
+                        document.querySelector('#MagnetLink').value = '';
+                        showStatus('Added to downloads.', false);
+                        return loadTorrents();
+                    })
+                    .catch(function(error) {
+                        showStatus('Failed to add download: ' + getErrorMessage(error), true);
+                    })
+                    .finally(function() {
+                        Dashboard.hideLoadingMsg();
+                    });
+            }
+
+            function getSearchResults(response) {
+                if (Array.isArray(response)) {
+                    return response;
+                }
+
+                var results = pickField(response, 'results', 'Results');
+                if (Array.isArray(results)) {
+                    return results;
+                }
+
+                return [];
+            }
+
+            function renderSearchResults(response) {
+                var body = document.querySelector('#SearchResultsBody');
+                var results = getSearchResults(response);
+
+                if (!results || results.length === 0) {
+                    body.innerHTML = '<tr><td colspan="5">No results found.</td></tr>';
+                    return;
+                }
+
+                body.innerHTML = results.map(function(item) {
+                    var name = pickField(item, 'name', 'Name') || 'Unknown';
+                    var source = pickField(item, 'source', 'Source') || pickField(response, 'source', 'Source') || lockedSearchSource;
+                    var size = pickField(item, 'size', 'Size') || '-';
+                    var seeders = pickField(item, 'seeders', 'Seeders') || '-';
+                    var leechers = pickField(item, 'leechers', 'Leechers') || '-';
+                    var addLink = pickField(item, 'magnet', 'Magnet') || pickField(item, 'torrent', 'Torrent') || '';
+                    var escapedName = escapeHtml(name);
+                    var escapedSource = escapeHtml(source);
+                    var escapedSize = escapeHtml(size);
+                    var escapedAddLink = escapeHtml(addLink);
+                    var disabledAttr = addLink ? '' : ' disabled';
+
+                    return '' +
+                        '<tr>' +
+                        '<td>' + escapedName + '</td>' +
+                        '<td>' + escapedSource + '</td>' +
+                        '<td>' + escapedSize + '</td>' +
+                        '<td>' + escapeHtml(seeders) + ' / ' + escapeHtml(leechers) + '</td>' +
+                        '<td>' +
+                        '<button is="emby-button" type="button" class="raised emby-button searchResultAddButton" data-name="' + escapedName + '" data-link="' + escapedAddLink + '"' + disabledAttr + '>Add</button>' +
+                        '</td>' +
+                        '</tr>';
+                }).join('');
+            }
+
+            function executeSearch(query, pageNumber) {
+                var trimmedQuery = (query || '').trim();
+                if (!trimmedQuery) {
+                    showStatus('Search query is required.', true);
+                    return Promise.resolve();
+                }
+
+                var resolvedPage = Math.max(1, asNumber(pageNumber, 1));
+                var endpoint = 'MyJellyfinPlugin/Search?q=' + encodeURIComponent(trimmedQuery) + '&page=' + resolvedPage + '&source=' + encodeURIComponent(lockedSearchSource);
+
+                Dashboard.showLoadingMsg();
+                return apiRequest('GET', endpoint, undefined, true)
+                    .then(function(response) {
+                        var results = getSearchResults(response);
+                        var responsePage = Math.max(1, asNumber(pickField(response, 'page', 'Page'), resolvedPage));
+                        var hasPreviousPage = asBoolean(pickField(response, 'hasPreviousPage', 'HasPreviousPage'), responsePage > 1);
+                        var hasNextPage = asBoolean(pickField(response, 'hasNextPage', 'HasNextPage'), results.length > 0);
+
+                        uiState.searchQuery = trimmedQuery;
+                        uiState.searchPage = responsePage;
+                        uiState.hasPreviousPage = hasPreviousPage;
+                        uiState.hasNextPage = hasNextPage;
+
+                        document.querySelector('#SearchQuery').value = trimmedQuery;
+                        renderSearchResults(response);
+                        updateSearchPaginationUi();
+                        showStatus('Search completed.', false);
+                    })
+                    .catch(function(error) {
+                        showStatus('Search failed: ' + getErrorMessage(error), true);
+                    })
+                    .finally(function() {
+                        Dashboard.hideLoadingMsg();
+                    });
+            }
+
+            function searchTorrents(event) {
+                event.preventDefault();
+                return executeSearch(document.querySelector('#SearchQuery').value, 1);
+            }
+
+            function goToPreviousSearchPage() {
+                if (!uiState.searchQuery || !uiState.hasPreviousPage) {
+                    return;
+                }
+
+                executeSearch(uiState.searchQuery, Math.max(1, uiState.searchPage - 1));
+            }
+
+            function goToNextSearchPage() {
+                if (!uiState.searchQuery || !uiState.hasNextPage) {
+                    return;
+                }
+
+                executeSearch(uiState.searchQuery, uiState.searchPage + 1);
+            }
+
+            function addSearchResult(link, title) {
+                if (!link) {
+                    showStatus('No magnet or download link available for this result.', true);
+                    return Promise.resolve();
+                }
+
+                var payload = {
+                    magnetLink: link,
+                    savePath: document.querySelector('#OverrideSavePath').value.trim() || null,
+                    category: document.querySelector('#OverrideCategory').value.trim() || null,
+                    paused: document.querySelector('#AddPaused').checked
+                };
+
+                Dashboard.showLoadingMsg();
+                return apiRequest('POST', 'MyJellyfinPlugin/Torrents/Add', payload, false)
+                    .then(function() {
+                        showStatus('Added from search: ' + (title || 'result') + '.', false);
+                        return loadTorrents();
+                    })
+                    .catch(function(error) {
+                        showStatus('Failed to add search result: ' + getErrorMessage(error), true);
+                    })
+                    .finally(function() {
+                        Dashboard.hideLoadingMsg();
+                    });
+            }
+
+            function loadTorrents() {
+                return apiRequest('GET', 'MyJellyfinPlugin/Torrents', undefined, true)
+                    .then(function(torrents) {
+                        renderTorrentRows(torrents || []);
+                        if (selectedTorrentHash && uiState.activeView === 'files') {
+                            return loadFiles(selectedTorrentHash, selectedTorrentName);
+                        }
+
+                        return Promise.resolve();
+                    })
+                    .catch(function(error) {
+                        showStatus('Failed to load downloads: ' + getErrorMessage(error), true);
+                    });
+            }
+
+            function renderTorrentRows(torrents) {
+                var body = document.querySelector('#TorrentTableBody');
+                if (!torrents || torrents.length === 0) {
+                    body.innerHTML = '<tr><td colspan="8">No downloads found.</td></tr>';
+                    return;
+                }
+
+                body.innerHTML = torrents.map(function(torrent) {
+                    var name = pickField(torrent, 'name', 'Name') || 'Unknown';
+                    var state = pickField(torrent, 'state', 'State') || 'Unknown';
+                    var hash = pickField(torrent, 'hash', 'Hash') || '';
+                    var progress = asFloat(pickField(torrent, 'progress', 'Progress'), 0);
+                    var downloadSpeed = asFloat(pickField(torrent, 'downloadSpeed', 'DownloadSpeed'), 0);
+                    var uploadSpeed = asFloat(pickField(torrent, 'uploadSpeed', 'UploadSpeed'), 0);
+                    var downloadedBytes = asFloat(pickField(torrent, 'downloadedBytes', 'DownloadedBytes'), 0);
+                    var totalSize = asFloat(pickField(torrent, 'totalSize', 'TotalSize'), 0);
+                    var etaSeconds = asNumber(pickField(torrent, 'etaSeconds', 'EtaSeconds'), 0);
+                    var ratio = asFloat(pickField(torrent, 'ratio', 'Ratio'), 0).toFixed(2);
+
+                    var escapedName = escapeHtml(name);
+                    var escapedState = escapeHtml(state);
+                    var escapedHash = escapeHtml(hash);
+                    var downUp = formatSpeed(downloadSpeed) + ' / ' + formatSpeed(uploadSpeed);
+                    var size = formatBytes(downloadedBytes) + ' / ' + formatBytes(totalSize);
+
+                    return '' +
+                        '<tr>' +
+                        '<td>' + escapedName + '</td>' +
+                        '<td>' + escapedState + '</td>' +
+                        '<td>' + formatPercent(progress) + '</td>' +
+                        '<td>' + downUp + '</td>' +
+                        '<td>' + size + '</td>' +
+                        '<td>' + formatEta(etaSeconds) + '</td>' +
+                        '<td>' + ratio + '</td>' +
+                        '<td>' +
+                        '<button is="emby-button" type="button" class="raised emby-button torrentActionButton" data-action="pause" data-hash="' + escapedHash + '">Pause</button> ' +
+                        '<button is="emby-button" type="button" class="raised emby-button torrentActionButton" data-action="resume" data-hash="' + escapedHash + '">Resume</button> ' +
+                        '<button is="emby-button" type="button" class="raised emby-button torrentActionButton" data-action="files" data-name="' + escapedName + '" data-hash="' + escapedHash + '">Files</button> ' +
+                        '<button is="emby-button" type="button" class="raised emby-button torrentActionButton" data-action="delete" data-hash="' + escapedHash + '">Delete</button>' +
+                        '</td>' +
+                        '</tr>';
+                }).join('');
+            }
+
+            function sendTorrentAction(hash, action, payload) {
+                Dashboard.showLoadingMsg();
+                return apiRequest('POST', 'MyJellyfinPlugin/Torrents/' + encodeURIComponent(hash) + '/' + action, payload, false)
+                    .then(function() {
+                        if (action === 'Delete' && selectedTorrentHash === hash) {
+                            clearSelectedTorrentFiles();
+                        }
+
+                        showStatus('Download action completed: ' + action + '.', false);
+                        return loadTorrents();
+                    })
+                    .catch(function(error) {
+                        showStatus('Download action failed: ' + getErrorMessage(error), true);
+                    })
+                    .finally(function() {
+                        Dashboard.hideLoadingMsg();
+                    });
+            }
+
+            function clearSelectedTorrentFiles() {
+                selectedTorrentHash = null;
+                selectedTorrentName = null;
+                document.querySelector('#TorrentFilesTitle').textContent = 'Download Files';
+                document.querySelector('#TorrentFilesHint').textContent = 'Select a download from Current Downloads to manage file priorities.';
+                document.querySelector('#TorrentFilesBody').innerHTML = '<tr><td colspan="5">No download selected.</td></tr>';
+            }
+
+            function openFilesView(hash, name) {
+                setActiveView('files');
+                loadFiles(hash, name);
+            }
+
+            function loadFiles(hash, name) {
+                selectedTorrentHash = hash;
+                selectedTorrentName = name || hash;
+
+                return apiRequest('GET', 'MyJellyfinPlugin/Torrents/' + encodeURIComponent(hash) + '/Files', undefined, true)
+                    .then(function(files) {
+                        document.querySelector('#TorrentFilesTitle').textContent = 'Download Files: ' + selectedTorrentName;
+                        document.querySelector('#TorrentFilesHint').textContent = 'Managing file priorities for the selected download.';
+                        renderFileRows(hash, files || []);
+                    })
+                    .catch(function(error) {
+                        showStatus('Failed to load download files: ' + getErrorMessage(error), true);
+                    });
+            }
+
+            function renderFileRows(hash, files) {
+                var body = document.querySelector('#TorrentFilesBody');
+                if (!files || files.length === 0) {
+                    body.innerHTML = '<tr><td colspan="5">No files for this download.</td></tr>';
+                    return;
+                }
+
+                body.innerHTML = files.map(function(file) {
+                    var fileIndex = asNumber(pickField(file, 'index', 'Index'), -1);
+                    var fileName = pickField(file, 'name', 'Name') || 'Unknown';
+                    var fileSize = asFloat(pickField(file, 'size', 'Size'), 0);
+                    var fileProgress = asFloat(pickField(file, 'progress', 'Progress'), 0);
+                    var priority = asNumber(pickField(file, 'priority', 'Priority'), 1);
+                    var escapedName = escapeHtml(fileName);
+                    var escapedHash = escapeHtml(hash);
+
+                    return '' +
+                        '<tr>' +
+                        '<td>' + escapedName + '</td>' +
+                        '<td>' + formatBytes(fileSize) + '</td>' +
+                        '<td>' + formatPercent(fileProgress) + '</td>' +
+                        '<td>' +
+                        '<select is="emby-select" class="emby-select-withcolor emby-select filePrioritySelect" data-hash="' + escapedHash + '" data-file-index="' + fileIndex + '">' +
+                        '<option value="0"' + (priority === 0 ? ' selected' : '') + '>Skip</option>' +
+                        '<option value="1"' + (priority === 1 ? ' selected' : '') + '>Normal</option>' +
+                        '<option value="6"' + (priority === 6 ? ' selected' : '') + '>High</option>' +
+                        '<option value="7"' + (priority === 7 ? ' selected' : '') + '>Max</option>' +
+                        '</select>' +
+                        '</td>' +
+                        '<td>' +
+                        '<button is="emby-button" type="button" class="raised emby-button updateFilePriorityButton" data-hash="' + escapedHash + '" data-file-index="' + fileIndex + '">Apply</button>' +
+                        '</td>' +
+                        '</tr>';
+                }).join('');
+            }
+
+            function updateFilePriority(hash, fileIndex, priority) {
+                Dashboard.showLoadingMsg();
+                return apiRequest(
+                    'POST',
+                    'MyJellyfinPlugin/Torrents/' + encodeURIComponent(hash) + '/Files/' + fileIndex + '/Priority',
+                    { priority: priority },
+                    false)
+                    .then(function() {
+                        showStatus('Updated file priority.', false);
+                        return loadFiles(hash, selectedTorrentName);
+                    })
+                    .catch(function(error) {
+                        showStatus('Failed to update file priority: ' + getErrorMessage(error), true);
+                    })
+                    .finally(function() {
+                        Dashboard.hideLoadingMsg();
+                    });
+            }
+
+            function startRefreshLoop() {
+                if (refreshTimer) {
+                    window.clearInterval(refreshTimer);
+                    refreshTimer = null;
+                }
+
+                var intervalSeconds = 5;
+                if (currentConfig && currentConfig.AutoRefreshSeconds) {
+                    intervalSeconds = Math.max(2, Math.min(60, asNumber(currentConfig.AutoRefreshSeconds, 5)));
+                }
+
+                refreshTimer = window.setInterval(function() {
+                    if (isPageVisible && uiState.activeView === 'torrents') {
+                        loadTorrents();
+                    }
+                }, intervalSeconds * 1000);
+            }
+
+            function stopRefreshLoop() {
+                if (refreshTimer) {
+                    window.clearInterval(refreshTimer);
+                    refreshTimer = null;
+                }
+            }
+
+            function updateRefreshLoopState() {
+                if (!isPageVisible || uiState.activeView !== 'torrents') {
+                    stopRefreshLoop();
+                    return;
+                }
+
+                startRefreshLoop();
+            }
+
+            function bindEvents() {
+                if (eventsBound) {
+                    return;
+                }
+
+                eventsBound = true;
+
+                document.querySelector('.pluginTabBar').addEventListener('click', function(event) {
+                    var button = event.target.closest('.pluginTabButton');
+                    if (!button) {
+                        return;
+                    }
+
+                    var targetView = button.getAttribute('data-view');
+                    setActiveView(targetView);
+                });
+
+                document.querySelector('#MyJellyfinPluginSettingsForm').addEventListener('submit', saveConfig);
+                document.querySelector('#SearchForm').addEventListener('submit', searchTorrents);
+                document.querySelector('#AddMagnetForm').addEventListener('submit', addMagnet);
+
+                document.querySelector('#SearchPrevButton').addEventListener('click', function() {
+                    goToPreviousSearchPage();
+                });
+
+                document.querySelector('#SearchNextButton').addEventListener('click', function() {
+                    goToNextSearchPage();
+                });
+
+                document.querySelector('#RefreshNowButton').addEventListener('click', function() {
+                    Dashboard.showLoadingMsg();
+                    loadTorrents().finally(function() {
+                        Dashboard.hideLoadingMsg();
+                    });
+                });
+
+                document.querySelector('#TorrentTableBody').addEventListener('click', function(event) {
+                    var target = event.target;
+                    if (!target || !target.classList.contains('torrentActionButton')) {
+                        return;
+                    }
+
+                    var action = target.getAttribute('data-action');
+                    var hash = target.getAttribute('data-hash');
+                    var name = target.getAttribute('data-name');
+
+                    if (!hash || !action) {
+                        return;
+                    }
+
+                    if (action === 'files') {
+                        openFilesView(hash, name);
+                        return;
+                    }
+
+                    if (action === 'delete') {
+                        var deleteFiles = window.confirm('Delete downloaded files from disk too? Click Cancel to keep files.');
+                        sendTorrentAction(hash, 'Delete', { deleteFiles: deleteFiles });
+                        return;
+                    }
+
+                    if (action === 'pause') {
+                        sendTorrentAction(hash, 'Pause');
+                        return;
+                    }
+
+                    if (action === 'resume') {
+                        sendTorrentAction(hash, 'Resume');
+                    }
+                });
+
+                document.querySelector('#TorrentFilesBody').addEventListener('click', function(event) {
+                    var target = event.target;
+                    if (!target || !target.classList.contains('updateFilePriorityButton')) {
+                        return;
+                    }
+
+                    var row = target.closest('tr');
+                    var select = row ? row.querySelector('.filePrioritySelect') : null;
+                    var hash = target.getAttribute('data-hash');
+                    var fileIndex = target.getAttribute('data-file-index');
+
+                    if (!select || !hash || fileIndex === null) {
+                        return;
+                    }
+
+                    var priority = asNumber(select.value, 1);
+                    updateFilePriority(hash, asNumber(fileIndex, 0), priority);
+                });
+
+                document.querySelector('#SearchResultsBody').addEventListener('click', function(event) {
+                    var target = event.target;
+                    if (!target || !target.classList.contains('searchResultAddButton')) {
+                        return;
+                    }
+
+                    var addLink = target.getAttribute('data-link');
+                    var name = target.getAttribute('data-name');
+                    addSearchResult(addLink, name);
+                });
+            }
+
+            page.addEventListener('pageshow', function() {
+                isPageVisible = true;
+                Dashboard.showLoadingMsg();
+                bindEvents();
+                setActiveView('search');
+                updateSearchPaginationUi();
+
+                loadConfig()
+                    .then(function() {
+                        return loadTorrents();
+                    })
+                    .catch(function(error) {
+                        showStatus('Failed to initialize page: ' + getErrorMessage(error), true);
+                    })
+                    .finally(function() {
+                        Dashboard.hideLoadingMsg();
+                    });
+            });
+
+            page.addEventListener('pagehide', function() {
+                isPageVisible = false;
+                stopRefreshLoop();
+            });
+        })();
+    </script>
+</div>
+</body>
+</html>
