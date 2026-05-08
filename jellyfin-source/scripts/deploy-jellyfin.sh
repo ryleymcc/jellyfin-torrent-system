@@ -150,6 +150,15 @@ require_command() {
     fi
 }
 
+require_command_with_hint() {
+    local command_name=$1
+    local hint=$2
+    if ! command -v "$command_name" >/dev/null 2>&1; then
+        echo "Missing required command: $command_name. $hint" >&2
+        exit 1
+    fi
+}
+
 resolve_remote_path() {
     local path=$1
     local remote_home=$2
@@ -266,6 +275,61 @@ build_plugin_artifact() {
     PLUGIN_DIRECTORY="${plugin_name}_${PLUGIN_VERSION}"
 }
 
+assert_local_prerequisites() {
+    local requires_dotnet=$1
+
+    require_command_with_hint ssh "Install the OpenSSH client on the deploy machine."
+    require_command_with_hint scp "Install the OpenSSH client on the deploy machine."
+    require_command_with_hint tar "Install tar on the deploy machine."
+    require_command_with_hint docker "Install Docker with buildx on the deploy machine."
+    require_command_with_hint curl "Install curl on the deploy machine."
+
+    if ! docker buildx version >/dev/null 2>&1; then
+        echo "docker buildx is required on the deploy machine." >&2
+        exit 1
+    fi
+
+    if [ "$requires_dotnet" = true ]; then
+        require_command_with_hint dotnet "Install the .NET 9 SDK on the deploy machine or run with --skip-plugin."
+    fi
+}
+
+assert_remote_docker_prerequisites() {
+    local remote_target=$1
+    local remote_port=$2
+    local remote_command
+
+    remote_command=$(cat <<'EOF'
+IFS= read -r DEPLOY_SUDO_PASSWORD || exit 1
+if ! command -v sudo >/dev/null 2>&1; then
+    echo "sudo is required on the target host." >&2
+    exit 1
+fi
+
+if ! printf '%s\n' "$DEPLOY_SUDO_PASSWORD" | sudo -S -p '' sh -c 'command -v docker >/dev/null 2>&1'; then
+    echo "Docker must already be installed on the target host before deployment." >&2
+    exit 1
+fi
+
+if ! printf '%s\n' "$DEPLOY_SUDO_PASSWORD" | sudo -S -p '' docker version >/dev/null 2>&1; then
+    echo "Docker is installed on the target host but could not be started with sudo." >&2
+    exit 1
+fi
+
+if ! printf '%s\n' "$DEPLOY_SUDO_PASSWORD" | sudo -S -p '' docker compose version >/dev/null 2>&1; then
+    echo "docker compose must already be available on the target host before deployment." >&2
+    exit 1
+fi
+EOF
+)
+
+    printf '>> ssh -p %q %q %q\n' "$remote_port" "$remote_target" "$remote_command"
+    if ! printf '%s\n' "$DEPLOY_SUDO_PASSWORD" | ssh -p "$remote_port" "$remote_target" "$remote_command"; then
+        echo "Remote Docker preflight failed" >&2
+        exit 1
+    fi
+}
+
 load_env_file "$ENV_FILE"
 
 DEPLOY_SSH_PORT=${DEPLOY_SSH_PORT:-22}
@@ -300,13 +364,7 @@ fi
 
 required DEPLOY_SUDO_PASSWORD "$DEPLOY_SUDO_PASSWORD"
 
-require_command ssh
-require_command scp
-require_command tar
-require_command docker
-require_command dotnet
-require_command curl
-docker buildx version >/dev/null
+assert_local_prerequisites "$( [ "$SKIP_PLUGIN" -eq 0 ] && printf true || printf false )"
 
 PLUGIN_PROJECT_PATH="$REPO_ROOT/MyJellyfinPlugin/MyJellyfinPlugin.csproj"
 TORRENT_SEARCH_SOURCE="$REPO_ROOT/Torrent-Search-API"
@@ -315,6 +373,8 @@ if [ ! -d "$TORRENT_SEARCH_SOURCE" ]; then
     echo "Torrent-Search-API source not found: $TORRENT_SEARCH_SOURCE" >&2
     exit 1
 fi
+
+assert_remote_docker_prerequisites "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" "$DEPLOY_SSH_PORT"
 
 REMOTE_FACTS=$(run ssh -p "$DEPLOY_SSH_PORT" "$DEPLOY_SSH_USER@$DEPLOY_SSH_HOST" 'printf '"'"'%s|%s|%s|%s'"'"' "$HOME" "$(id -u)" "$(id -g)" "$(uname -m)"')
 IFS='|' read -r REMOTE_HOME REMOTE_UID REMOTE_GID REMOTE_ARCHITECTURE <<EOF

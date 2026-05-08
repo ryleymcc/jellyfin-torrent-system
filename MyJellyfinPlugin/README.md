@@ -81,6 +81,8 @@ Configure the plugin with:
 
 ## Build
 
+Requires the `.NET SDK 9.0` on the machine running the build.
+
 ```bash
 dotnet restore
 dotnet build -c Release

@@ -22,3 +22,4 @@ C:\Users\faste\projects\vps\jellyfin\MyJellyfinPlugin\obj\Release\net9.0\MyJelly
 C:\Users\faste\projects\vps\jellyfin\MyJellyfinPlugin\obj\Release\net9.0\refint\MyJellyfinPlugin.dll
 C:\Users\faste\projects\vps\jellyfin\MyJellyfinPlugin\obj\Release\net9.0\MyJellyfinPlugin.pdb
 C:\Users\faste\projects\vps\jellyfin\MyJellyfinPlugin\obj\Release\net9.0\ref\MyJellyfinPlugin.dll
+C:\Users\faste\projects\vps\jellyfin\MyJellyfinPlugin\obj\Release\net9.0\MyJellyfinPlugin.sourcelink.json

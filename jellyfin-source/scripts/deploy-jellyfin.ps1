@@ -49,6 +49,21 @@ function Resolve-RequiredValue {
     return $Value.Trim()
 }
 
+function Assert-CommandAvailable {
+    param(
+        [string]$CommandName,
+        [string]$InstallHint
+    )
+
+    if (-not (Get-Command $CommandName -ErrorAction SilentlyContinue)) {
+        if ([string]::IsNullOrWhiteSpace($InstallHint)) {
+            throw "Missing required command: $CommandName"
+        }
+
+        throw "Missing required command: $CommandName. $InstallHint"
+    }
+}
+
 function Import-EnvFile {
     param([string]$Path)
 
@@ -271,6 +286,60 @@ function Get-RemoteFacts {
     }
 }
 
+function Assert-LocalPrerequisites {
+    param([bool]$RequiresDotnet)
+
+    Assert-CommandAvailable -CommandName 'ssh' -InstallHint 'Install the OpenSSH client on the deploy machine.'
+    Assert-CommandAvailable -CommandName 'scp' -InstallHint 'Install the OpenSSH client on the deploy machine.'
+    Assert-CommandAvailable -CommandName 'tar' -InstallHint 'Install tar on the deploy machine.'
+    Assert-CommandAvailable -CommandName 'docker' -InstallHint 'Install Docker with buildx on the deploy machine.'
+
+    try {
+        Invoke-NativeCapture -FilePath 'docker' -Arguments @('buildx', 'version') -ErrorMessage 'docker buildx is required on the deploy machine' | Out-Null
+    }
+    catch {
+        throw 'Docker buildx is required on the deploy machine.'
+    }
+
+    if ($RequiresDotnet) {
+        Assert-CommandAvailable -CommandName 'dotnet' -InstallHint 'Install the .NET 9 SDK on the deploy machine or run with -SkipPlugin.'
+    }
+}
+
+function Assert-RemoteDockerPrerequisites {
+    param(
+        [string]$HostName,
+        [string]$User,
+        [int]$Port,
+        [string]$Password
+    )
+
+    $remoteCommand = @'
+IFS= read -r DEPLOY_SUDO_PASSWORD || exit 1
+if ! command -v sudo >/dev/null 2>&1; then
+    echo "sudo is required on the target host." >&2
+    exit 1
+fi
+
+if ! printf '%s\n' "$DEPLOY_SUDO_PASSWORD" | sudo -S -p '' sh -c 'command -v docker >/dev/null 2>&1'; then
+    echo "Docker must already be installed on the target host before deployment." >&2
+    exit 1
+fi
+
+if ! printf '%s\n' "$DEPLOY_SUDO_PASSWORD" | sudo -S -p '' docker version >/dev/null 2>&1; then
+    echo "Docker is installed on the target host but could not be started with sudo." >&2
+    exit 1
+fi
+
+if ! printf '%s\n' "$DEPLOY_SUDO_PASSWORD" | sudo -S -p '' docker compose version >/dev/null 2>&1; then
+    echo "docker compose must already be available on the target host before deployment." >&2
+    exit 1
+fi
+'@
+
+    Invoke-NativeCommand -FilePath 'ssh' -Arguments @('-p', $Port.ToString(), "${User}@${HostName}", $remoteCommand) -StandardInput $Password -ErrorMessage 'Remote Docker preflight failed'
+}
+
 function Get-DockerPlatform {
     param([string]$Architecture)
 
@@ -416,6 +485,8 @@ if ([string]::IsNullOrWhiteSpace($QbittorrentPassword)) {
     $QbittorrentPassword = New-RandomSecret -Length 32
 }
 
+Assert-LocalPrerequisites -RequiresDotnet:(-not $SkipPlugin)
+
 if ([string]::IsNullOrWhiteSpace($SudoPassword)) {
     if (-not [string]::IsNullOrWhiteSpace($SudoPasswordFile)) {
         if (-not (Test-Path $SudoPasswordFile)) {
@@ -441,6 +512,8 @@ if (-not (Test-Path $torrentSearchSource)) {
 if (-not (Test-Path $buildScriptPath)) {
     throw "build_app.ps1 not found: $buildScriptPath"
 }
+
+Assert-RemoteDockerPrerequisites -HostName $RemoteHost -User $RemoteUser -Port $RemotePort -Password $SudoPassword
 
 $remoteFacts = Get-RemoteFacts -HostName $RemoteHost -User $RemoteUser -Port $RemotePort
 $resolvedRemoteAppRoot = Resolve-RemotePath -Path $RemoteAppRoot -RemoteHome $remoteFacts.Home

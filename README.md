@@ -13,9 +13,10 @@ Quick Deploy
 Requirements:
 
 - Deploy machine: Ubuntu, Raspberry Pi OS, or Windows.
-- Linux deploy machine: Bash, SSH, SCP, tar, curl, Docker with buildx, and the .NET SDK.
-- Windows deploy machine: PowerShell, SSH, SCP, tar, Docker Desktop with buildx, and the .NET SDK.
-- Target server: Ubuntu or Raspberry Pi OS with Docker and Docker Compose.
+- Linux deploy machine: Bash, SSH, SCP, tar, curl, and Docker with buildx.
+- Windows deploy machine: PowerShell, SSH, SCP, tar, and Docker Desktop with buildx.
+- `.NET SDK 9.0` must already be installed on the deploy machine if you are building `MyJellyfinPlugin`. Use `--skip-plugin` or `-SkipPlugin` to skip that local prerequisite.
+- Target server: Ubuntu or Raspberry Pi OS with `sudo`, Docker Engine, and `docker compose` already installed.
 - DNS: a Cloudflare `A` record for the Jellyfin domain.
 
 1. Clone the repo with submodules:
@@ -180,6 +181,7 @@ Notes
 
 - Target architecture is detected automatically over SSH.
 - Supported targets are `linux/amd64` and `linux/arm64`.
-- The target server must already have Docker and Docker Compose available.
+- The deploy scripts now preflight the target host and stop early if `docker` or `docker compose` is missing.
+- The plugin build needs a local `.NET SDK 9.0` unless you deploy with `--skip-plugin` or `-SkipPlugin`.
 - The SSH account must be able to run `sudo`.
 - Ports `80` and `443` must reach the target server for certificate issuance.

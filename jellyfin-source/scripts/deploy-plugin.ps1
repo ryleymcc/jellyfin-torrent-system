@@ -10,6 +10,47 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+function Assert-CommandAvailable {
+    param(
+        [string]$CommandName,
+        [string]$InstallHint
+    )
+
+    if (-not (Get-Command $CommandName -ErrorAction SilentlyContinue)) {
+        if ([string]::IsNullOrWhiteSpace($InstallHint)) {
+            throw "Missing required command: $CommandName"
+        }
+
+        throw "Missing required command: $CommandName. $InstallHint"
+    }
+}
+
+function Invoke-NativeCapture {
+    param(
+        [string]$FilePath,
+        [string[]]$Arguments,
+        [string]$ErrorMessage = "Command failed"
+    )
+
+    $output = & $FilePath @Arguments 2>&1
+    if ($LASTEXITCODE -ne 0) {
+        throw "$ErrorMessage`n$($output -join "`n")"
+    }
+
+    return ($output -join "`n").Trim()
+}
+
+function Assert-RemoteDockerAvailable {
+    param(
+        [string]$User,
+        [string]$Host,
+        [int]$Port
+    )
+
+    $remoteCommand = 'docker version >/dev/null 2>&1'
+    Invoke-NativeCapture -FilePath 'ssh' -Arguments @('-p', $Port.ToString(), "${User}@${Host}", $remoteCommand) -ErrorMessage 'docker must already be installed on the target host before restarting Jellyfin.'
+}
+
 $workspaceRoot = Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 
 if (-not $PluginProjectPath) {
@@ -22,6 +63,14 @@ if ([string]::IsNullOrWhiteSpace($RemoteUser) -or [string]::IsNullOrWhiteSpace($
 
 if ([string]::IsNullOrWhiteSpace($RemoteStorageRoot)) {
     throw "REMOTE_STORAGE_ROOT is required."
+}
+
+Assert-CommandAvailable -CommandName 'dotnet' -InstallHint 'Install the .NET 9 SDK on the deploy machine before deploying the plugin.'
+Assert-CommandAvailable -CommandName 'ssh' -InstallHint 'Install the OpenSSH client on the deploy machine.'
+Assert-CommandAvailable -CommandName 'scp' -InstallHint 'Install the OpenSSH client on the deploy machine.'
+
+if (-not $SkipRestart) {
+    Assert-RemoteDockerAvailable -User $RemoteUser -Host $RemoteHost -Port $RemotePort
 }
 
 $resolvedProjectPath = (Resolve-Path $PluginProjectPath).Path

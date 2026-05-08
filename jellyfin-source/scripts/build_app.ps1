@@ -7,6 +7,21 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+function Assert-CommandAvailable {
+    param(
+        [string]$CommandName,
+        [string]$InstallHint
+    )
+
+    if (-not (Get-Command $CommandName -ErrorAction SilentlyContinue)) {
+        if ([string]::IsNullOrWhiteSpace($InstallHint)) {
+            throw "Missing required command: $CommandName"
+        }
+
+        throw "Missing required command: $CommandName. $InstallHint"
+    }
+}
+
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $fullImage = "${ImageName}:${ImageTag}"
 
@@ -16,6 +31,8 @@ if (-not $OutputTarPath) {
 
 Write-Host "Project root: $projectRoot"
 Write-Host "Docker image: $fullImage"
+
+Assert-CommandAvailable -CommandName 'docker' -InstallHint 'Install Docker with buildx on the machine running this build.'
 
 Push-Location $projectRoot
 try {
