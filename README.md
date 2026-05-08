@@ -1,5 +1,5 @@
-Custom Jellyfin Cloud Server
-============================
+jellyfin-torrent-system
+=======================
 
 This repo deploys a complete Jellyfin media server to any Ubuntu or Raspberry Pi OS Docker host.
 
@@ -17,7 +17,7 @@ Requirements:
 1. Create the deploy config:
 
 ```powershell
-cd C:\Users\faste\projects\vps\jellyfin\jellyfin-source\scripts
+cd .\jellyfin-source\scripts
 Copy-Item .\deploy.env.example .\deploy.env
 notepad .\deploy.env
 ```
@@ -109,7 +109,7 @@ ssh your-user@your-server "cd ~/jellyfin-app && docker compose ps"
 Redeploy after code changes:
 
 ```powershell
-cd C:\Users\faste\projects\vps\jellyfin\jellyfin-source\scripts
+cd .\jellyfin-source\scripts
 .\deploy-jellyfin.ps1
 ```
 
