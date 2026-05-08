@@ -1,0 +1,8 @@
+[submodule "jellyfin-source/jellyfin"]
+	path = jellyfin-source/jellyfin
+	url = https://github.com/ryleymcc/jellyfin.git
+	branch = torrent-system-v10.11.8
+[submodule "jellyfin-source/jellyfin-web"]
+	path = jellyfin-source/jellyfin-web
+	url = https://github.com/ryleymcc/jellyfin-web.git
+	branch = torrent-system-v10.11.8

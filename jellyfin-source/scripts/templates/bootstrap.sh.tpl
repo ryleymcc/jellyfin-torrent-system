@@ -84,6 +84,38 @@ json_escape() {
     printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'
 }
 
+find_qbittorrent_temporary_password() {
+    since_arg=${1:-}
+    if [ -n "$since_arg" ]; then
+        sudo_cmd docker logs --since "$since_arg" qbittorrent 2>&1
+    else
+        sudo_cmd docker logs qbittorrent 2>&1
+    fi | sed -n 's/.*temporary password is provided for this session: //p' | tail -n 1
+}
+
+reset_qbittorrent_webui_auth() {
+    config_file="$REMOTE_STORAGE_ROOT/qbittorrent/config/qBittorrent/qBittorrent.conf"
+
+    if [ ! -f "$config_file" ]; then
+        echo "qBittorrent config file not found: $config_file" >&2
+        return 1
+    fi
+
+    echo "Resetting persisted qBittorrent WebUI auth so credentials can be re-seeded"
+    sudo_cmd docker compose -f "$APP_ROOT/docker-compose.yml" stop qbittorrent >/dev/null
+    sudo_cmd cp "$config_file" "$config_file.deploy-backup"
+    sudo_cmd sed -i \
+        -e '/^WebUI\\Username=/d' \
+        -e '/^WebUI\\Password_PBKDF2=/d' \
+        -e '/^WebUI\\Password_ha1=/d' \
+        "$config_file"
+    sudo_cmd docker compose -f "$APP_ROOT/docker-compose.yml" up -d qbittorrent >/dev/null
+    wait_for_container qbittorrent 60 || {
+        echo "qBittorrent did not restart after WebUI auth reset." >&2
+        return 1
+    }
+}
+
 bootstrap_qbittorrent() {
     require_curl
 
@@ -95,7 +127,7 @@ bootstrap_qbittorrent() {
     else
         attempts=0
         while [ "$attempts" -lt 30 ]; do
-            temp_password=$(sudo_cmd docker logs qbittorrent 2>&1 | sed -n 's/.*temporary password is provided for this session: //p' | tail -n 1)
+            temp_password=$(find_qbittorrent_temporary_password)
             if [ -n "$temp_password" ]; then
                 break
             fi
@@ -105,9 +137,27 @@ bootstrap_qbittorrent() {
         done
 
         if [ -z "$temp_password" ]; then
-            echo "Could not find the qBittorrent temporary password in container logs." >&2
-            rm -f "$cookie_file"
-            exit 1
+            reset_qbittorrent_webui_auth || {
+                rm -f "$cookie_file"
+                exit 1
+            }
+
+            attempts=0
+            while [ "$attempts" -lt 30 ]; do
+                temp_password=$(find_qbittorrent_temporary_password 2m)
+                if [ -n "$temp_password" ]; then
+                    break
+                fi
+
+                attempts=$((attempts + 1))
+                sleep 2
+            done
+
+            if [ -z "$temp_password" ]; then
+                echo "Could not find the qBittorrent temporary password after WebUI auth reset." >&2
+                rm -f "$cookie_file"
+                exit 1
+            fi
         fi
 
         if ! qb_login admin "$temp_password" "$cookie_file"; then

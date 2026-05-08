@@ -2,7 +2,10 @@
 *.log
 *.env
 *.gz
+*.dll
 */node_modules
 */package-lock.json
 .netlify
 .vscode
+
+MyJellyfinPlugin/obj/Release/net9.0/MyJellyfinPlugin.sourcelink.json

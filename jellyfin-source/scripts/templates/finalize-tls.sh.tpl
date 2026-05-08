@@ -36,15 +36,16 @@ sudo_cmd docker compose -f "$APP_ROOT/docker-compose.yml" exec -T nginx nginx -s
 
 echo "Installing the certificate renewal cron job"
 cron_file=/etc/cron.d/jellyfin-certbot-renew
+cron_tmp="$APP_ROOT/logs/jellyfin-certbot-renew.cron"
 
-cron_body=$(cat <<EOF
+cat > "$cron_tmp" <<EOF
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 17 3 * * * root /bin/sh '$APP_ROOT/scripts/renew-certificates.sh' >> '$APP_ROOT/logs/certbot-renew.log' 2>&1
 EOF
-)
 
-printf '%s\n' "$cron_body" | sudo_cmd tee "$cron_file" >/dev/null
+sudo_cmd cp "$cron_tmp" "$cron_file"
 sudo_cmd chmod 644 "$cron_file"
+rm -f "$cron_tmp"
 
 echo "TLS finalization complete"
